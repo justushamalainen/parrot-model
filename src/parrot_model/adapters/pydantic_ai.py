@@ -34,10 +34,13 @@ try:
         ToolReturnPart,
         UserPromptPart,
     )
-    from pydantic_ai.models import Model, StreamedResponse
-    from pydantic_ai.models.base import ModelRequestParameters
-    from pydantic_ai.result import RequestUsage
-    from pydantic_ai.settings import ModelSettings
+    from pydantic_ai.models import (
+        Model,
+        ModelRequestParameters,
+        ModelSettings,
+        RequestUsage,
+        StreamedResponse,
+    )
 
     PYDANTIC_AI_AVAILABLE = True
 except ImportError:
@@ -49,10 +52,13 @@ except ImportError:
             ModelMessage,
             ModelResponse,
         )
-        from pydantic_ai.models import Model, StreamedResponse
-        from pydantic_ai.models.base import ModelRequestParameters
-        from pydantic_ai.result import RequestUsage
-        from pydantic_ai.settings import ModelSettings
+        from pydantic_ai.models import (
+            Model,
+            ModelRequestParameters,
+            ModelSettings,
+            RequestUsage,
+            StreamedResponse,
+        )
 
 
 def _check_pydantic_ai_available():
