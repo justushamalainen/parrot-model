@@ -23,11 +23,13 @@ from typing import Any
 # Try to import LangChain components
 try:
     from langchain_core.messages import AIMessage
+    from langchain_core.messages.tool import ToolCall
 
     LANGCHAIN_AVAILABLE = True
 except ImportError:
     LANGCHAIN_AVAILABLE = False
     AIMessage = None  # type: ignore
+    ToolCall = None  # type: ignore
 
 
 def _check_langchain_available():
@@ -41,6 +43,95 @@ def _check_langchain_available():
         )
 
 
+def create_tool_call(
+    tool_name: str,
+    tool_call_id: str | None = None,
+    **parameters: Any
+) -> "ToolCall":
+    """
+    Create a LangChain ToolCall object.
+
+    This creates a ToolCall object using LangChain's native ToolCall class,
+    which can be added to a message's tool_calls list.
+
+    Args:
+        tool_name: The name of the tool/function to call.
+        tool_call_id: Optional unique identifier for this tool call.
+                     If None, a UUID4 will be generated.
+        **parameters: Keyword arguments representing the tool parameters.
+
+    Returns:
+        ToolCall: A LangChain ToolCall object.
+
+    Raises:
+        ImportError: If langchain-core is not installed.
+
+    Example:
+        >>> from parrot_model.adapters.langchain_helpers import create_tool_call
+        >>>
+        >>> tool_call = create_tool_call("get_weather", city="London")
+        >>> tool_call.name
+        'get_weather'
+        >>> tool_call.args
+        {'city': 'London'}
+    """
+    _check_langchain_available()
+
+    # Generate ID if not provided
+    if tool_call_id is None:
+        tool_call_id = str(uuid.uuid4())
+
+    return ToolCall(
+        name=tool_name,
+        args=parameters,
+        id=tool_call_id,
+    )
+
+
+def create_tool_calls(
+    *calls: tuple[str, dict[str, Any]]
+) -> list["ToolCall"]:
+    """
+    Create multiple LangChain ToolCall objects at once.
+
+    This is a convenience function for creating multiple tool calls in a single
+    call using LangChain's native ToolCall class. Each tool call is specified
+    as a tuple of (tool_name, parameters_dict).
+
+    Args:
+        *calls: Variable number of tuples, each containing:
+               - tool_name (str): The name of the tool
+               - parameters (dict): Dictionary of parameters for the tool
+
+    Returns:
+        list[ToolCall]: List of LangChain ToolCall objects.
+
+    Raises:
+        ImportError: If langchain-core is not installed.
+
+    Example:
+        >>> from parrot_model.adapters.langchain_helpers import create_tool_calls
+        >>>
+        >>> # Create multiple tool calls at once
+        >>> tool_calls = create_tool_calls(
+        ...     ("get_weather", {"city": "London"}),
+        ...     ("get_weather", {"city": "Paris"}),
+        ...     ("get_time", {"timezone": "UTC"})
+        ... )
+        >>>
+        >>> # Use in an AIMessage
+        >>> from langchain_core.messages import AIMessage
+        >>> message = AIMessage(content="Processing requests", tool_calls=tool_calls)
+    """
+    _check_langchain_available()
+
+    tool_call_list = []
+    for tool_name, parameters in calls:
+        tool_call_list.append(create_tool_call(tool_name, **parameters))
+
+    return tool_call_list
+
+
 def create_tool_call_dict(
     tool_name: str,
     tool_call_id: str | None = None,
@@ -50,7 +141,8 @@ def create_tool_call_dict(
     Create a tool call dictionary in OpenAI format for LangChain.
 
     This creates a tool call dictionary that can be added to a message's
-    additional_kwargs["tool_calls"] list.
+    additional_kwargs["tool_calls"] list. For most use cases, prefer using
+    create_tool_call() which returns a proper ToolCall object.
 
     Args:
         tool_name: The name of the tool/function to call.
@@ -99,7 +191,8 @@ def create_tool_call_message(
     Create a LangChain AIMessage with a tool call.
 
     This helper function creates a properly formatted AI message with a tool call
-    that can be added to a LangChain message list or used in LangGraph workflows.
+    using LangChain's native ToolCall class. The message can be added to a
+    LangChain message list or used in LangGraph workflows.
 
     Args:
         tool_name: The name of the tool/function to call.
@@ -109,7 +202,7 @@ def create_tool_call_message(
         **parameters: Keyword arguments representing the tool parameters.
 
     Returns:
-        AIMessage: A LangChain AIMessage with the tool call in additional_kwargs.
+        AIMessage: A LangChain AIMessage with the tool call.
 
     Raises:
         ImportError: If langchain-core is not installed.
@@ -142,13 +235,13 @@ def create_tool_call_message(
     """
     _check_langchain_available()
 
-    # Create the tool call dictionary
-    tool_call = create_tool_call_dict(tool_name, tool_call_id, **parameters)
+    # Create the tool call using LangChain's ToolCall class
+    tool_call = create_tool_call(tool_name, tool_call_id, **parameters)
 
     # Create AIMessage with tool call
     return AIMessage(
         content=content,
-        additional_kwargs={"tool_calls": [tool_call]}
+        tool_calls=[tool_call]
     )
 
 
@@ -159,8 +252,9 @@ def create_multi_tool_call_message(
     """
     Create a LangChain AIMessage with multiple tool calls.
 
-    This is a convenience function for creating a message with multiple tool calls.
-    Each tool call is specified as a tuple of (tool_name, parameters_dict).
+    This is a convenience function for creating a message with multiple tool calls
+    using LangChain's native ToolCall class. Each tool call is specified as a
+    tuple of (tool_name, parameters_dict).
 
     Args:
         *calls: Variable number of tuples, each containing:
@@ -186,21 +280,21 @@ def create_multi_tool_call_message(
         ... )
         >>>
         >>> # Access the tool calls
-        >>> tool_calls = message.additional_kwargs["tool_calls"]
+        >>> tool_calls = message.tool_calls
         >>> len(tool_calls)
         3
     """
     _check_langchain_available()
 
-    # Create all tool call dictionaries
+    # Create all tool calls using LangChain's ToolCall class
     tool_calls = []
     for tool_name, parameters in calls:
-        tool_calls.append(create_tool_call_dict(tool_name, **parameters))
+        tool_calls.append(create_tool_call(tool_name, **parameters))
 
     # Create AIMessage with all tool calls
     return AIMessage(
         content=content,
-        additional_kwargs={"tool_calls": tool_calls}
+        tool_calls=tool_calls
     )
 
 
@@ -247,6 +341,8 @@ def encode_tool_call_in_prompt(tool_name: str, **parameters: Any) -> str:
 
 
 __all__ = [
+    "create_tool_call",
+    "create_tool_calls",
     "create_tool_call_dict",
     "create_tool_call_message",
     "create_multi_tool_call_message",

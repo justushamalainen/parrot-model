@@ -7,8 +7,10 @@ tool calls for LangChain chains and LangGraph workflows.
 
 from parrot_model.adapters.langchain_helpers import (
     create_multi_tool_call_message,
+    create_tool_call,
     create_tool_call_dict,
     create_tool_call_message,
+    create_tool_calls,
     encode_tool_call_in_prompt,
 )
 
@@ -22,9 +24,56 @@ except ImportError:
     exit(1)
 
 
+def example_create_tool_call():
+    """Example: Creating a ToolCall object using LangChain's native class."""
+    print("\n=== Example 1: Native ToolCall Object ===\n")
+
+    # Create a tool call using LangChain's native ToolCall class
+    tool_call = create_tool_call("get_weather", city="London", units="metric")
+
+    print(f"Tool call type: {type(tool_call).__name__}")
+    print(f"Tool name: {tool_call.name}")
+    print(f"Arguments: {tool_call.args}")
+    print(f"Tool call ID: {tool_call.id}")
+
+    # Use directly in an AIMessage
+    try:
+        from langchain_core.messages import AIMessage
+
+        message = AIMessage(content="Checking weather", tool_calls=[tool_call])
+        print(f"\nCreated AIMessage with {len(message.tool_calls)} tool call(s)")
+    except ImportError:
+        print("\nSkipping AIMessage example (langchain not installed)")
+
+
+def example_create_multiple_tool_calls():
+    """Example: Creating multiple ToolCall objects at once."""
+    print("\n=== Example 2: Multiple ToolCall Objects ===\n")
+
+    # Create multiple tool calls at once
+    tool_calls = create_tool_calls(
+        ("get_weather", {"city": "London"}),
+        ("get_weather", {"city": "Paris"}),
+        ("get_time", {"timezone": "UTC"}),
+    )
+
+    print(f"Created {len(tool_calls)} tool calls:")
+    for i, tc in enumerate(tool_calls, 1):
+        print(f"  {i}. {tc.name} with args: {tc.args}")
+
+    # Use in an AIMessage
+    try:
+        from langchain_core.messages import AIMessage
+
+        message = AIMessage(content="Processing multiple requests", tool_calls=tool_calls)
+        print(f"\nCreated AIMessage with {len(message.tool_calls)} tool call(s)")
+    except ImportError:
+        print("\nSkipping AIMessage example (langchain not installed)")
+
+
 def example_tool_call_dict():
-    """Example: Creating a tool call dictionary."""
-    print("\n=== Example 1: Tool Call Dictionary ===\n")
+    """Example: Creating a tool call dictionary (legacy format)."""
+    print("\n=== Example 3: Tool Call Dictionary (Legacy) ===\n")
 
     # Create a tool call dictionary (OpenAI format)
     tool_call = create_tool_call_dict("get_weather", city="London", units="metric")
@@ -37,7 +86,7 @@ def example_tool_call_dict():
 
 def example_single_tool_call_message():
     """Example: Creating a message with a single tool call."""
-    print("\n=== Example 2: Single Tool Call Message ===\n")
+    print("\n=== Example 4: Single Tool Call Message ===\n")
 
     # Create an AI message with a tool call
     message = create_tool_call_message("get_weather", city="London", units="metric")
@@ -58,7 +107,7 @@ def example_single_tool_call_message():
 
 def example_multiple_tool_calls_message():
     """Example: Creating a message with multiple tool calls."""
-    print("\n=== Example 3: Multiple Tool Calls Message ===\n")
+    print("\n=== Example 5: Multiple Tool Calls Message ===\n")
 
     # Create a message with multiple tool calls
     message = create_multi_tool_call_message(
@@ -77,7 +126,7 @@ def example_multiple_tool_calls_message():
 
 def example_encoded_in_prompt():
     """Example: Encoding tool calls in prompts for Parrot Model."""
-    print("\n=== Example 4: Encoded Tool Calls in Prompts ===\n")
+    print("\n=== Example 6: Encoded Tool Calls in Prompts ===\n")
 
     # Create encoded tool call strings
     london_weather = encode_tool_call_in_prompt("get_weather", city="London")
@@ -93,7 +142,7 @@ def example_encoded_in_prompt():
 
 def example_with_chat_model():
     """Example: Using tool calls with ParrotChatModel."""
-    print("\n=== Example 5: With ParrotChatModel ===\n")
+    print("\n=== Example 7: With ParrotChatModel ===\n")
 
     # Create the chat model
     model = ParrotChatModel()
@@ -115,7 +164,7 @@ def example_with_chat_model():
 
 def example_in_message_list():
     """Example: Using tool calls in a conversation."""
-    print("\n=== Example 6: In a Conversation ===\n")
+    print("\n=== Example 8: In a Conversation ===\n")
 
     # Create a conversation with tool calls
     messages = [
@@ -141,7 +190,7 @@ def example_in_message_list():
 
 def example_with_langchain_chain():
     """Example: Using in a LangChain chain."""
-    print("\n=== Example 7: With LangChain Chain (LCEL) ===\n")
+    print("\n=== Example 9: With LangChain Chain (LCEL) ===\n")
 
     try:
         from langchain_core.prompts import ChatPromptTemplate
@@ -173,6 +222,8 @@ if __name__ == "__main__":
     print("LangChain Tool Call Helpers - Examples")
     print("=" * 60)
 
+    example_create_tool_call()
+    example_create_multiple_tool_calls()
     example_tool_call_dict()
     example_single_tool_call_message()
     example_multiple_tool_calls_message()

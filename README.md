@@ -133,7 +133,7 @@ response = model.generate(message)
 
 ### Tool Call Helpers
 
-Parrot Model provides helper functions to easily create tool calls for both Pydantic AI and LangChain/LangGraph:
+Parrot Model provides helper functions to easily create tool calls for both Pydantic AI and LangChain/LangGraph. These helpers use the native classes from each framework for maximum compatibility.
 
 #### Pydantic AI Helpers
 
@@ -144,7 +144,7 @@ from parrot_model.adapters.pydantic_ai_helpers import (
     encode_tool_call_in_prompt
 )
 
-# Create a single tool call
+# Create a single ToolCallPart (Pydantic AI's native class)
 tool_call = create_tool_call("get_weather", city="London", units="metric")
 
 # Create multiple tool calls at once
@@ -162,9 +162,20 @@ encoding = encode_tool_call_in_prompt("get_weather", city="London")
 
 ```python
 from parrot_model.adapters.langchain_helpers import (
+    create_tool_call,
+    create_tool_calls,
     create_tool_call_message,
     create_multi_tool_call_message,
     encode_tool_call_in_prompt
+)
+
+# Create a ToolCall object (LangChain's native class)
+tool_call = create_tool_call("get_weather", city="London")
+
+# Create multiple ToolCall objects at once
+tool_calls = create_tool_calls(
+    ("get_weather", {"city": "London"}),
+    ("get_time", {"timezone": "UTC"})
 )
 
 # Create an AI message with a tool call
