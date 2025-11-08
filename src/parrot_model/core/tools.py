@@ -10,6 +10,7 @@ import re
 import uuid
 from dataclasses import dataclass
 
+from parrot_model.utils.deterministic import generate_tool_call_id
 from parrot_model.utils.parser import parse_tool_parameters
 
 
@@ -69,18 +70,23 @@ class ToolCallParser:
         {'city': 'London'}
     """
 
-    def __init__(self, pattern: str):
+    def __init__(self, pattern: str, deterministic: bool = True):
         """
         Initialize the ToolCallParser with a regex pattern.
 
         Args:
             pattern: Regular expression pattern to match tool calls.
                     Should have two capture groups: (tool_name) and (parameters).
+            deterministic: Whether to generate deterministic IDs. When True (default),
+                          IDs are generated based on content hash. When False, random
+                          UUIDs are used.
 
         Example:
             >>> parser = ToolCallParser(r"\[TOOL:(\w+)\|(.+?)\]")
+            >>> parser_random = ToolCallParser(r"\[TOOL:(\w+)\|(.+?)\]", deterministic=False)
         """
         self.pattern = re.compile(pattern)
+        self.deterministic = deterministic
 
     def parse(self, message: str) -> list[ToolCall]:
         """
@@ -114,11 +120,22 @@ class ToolCallParser:
             # Parse the parameters
             parameters = parse_tool_parameters(param_string)
 
-            # Create ToolCall with unique ID
+            # Generate ID based on deterministic mode
+            if self.deterministic:
+                # Create deterministic ID from tool name and parameters
+                # Sort parameters for consistency
+                sorted_params = sorted(parameters.items())
+                param_repr = "|".join(f"{k}={v}" for k, v in sorted_params)
+                tool_id = generate_tool_call_id(tool_name, param_repr)
+            else:
+                # Use random UUID
+                tool_id = str(uuid.uuid4())
+
+            # Create ToolCall with ID
             tool_call = ToolCall(
                 name=tool_name,
                 parameters=parameters,
-                id=str(uuid.uuid4())
+                id=tool_id
             )
             tool_calls.append(tool_call)
 

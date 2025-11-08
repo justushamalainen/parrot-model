@@ -50,7 +50,10 @@ except ImportError:
     # Create placeholder types for type hints
     BaseChatModel = object  # type: ignore
     BaseMessage = object  # type: ignore
+    AIMessage = object  # type: ignore
+    AIMessageChunk = object  # type: ignore
     ChatResult = object  # type: ignore
+    ChatGeneration = object  # type: ignore
     ChatGenerationChunk = object  # type: ignore
     CallbackManagerForLLMRun = object  # type: ignore
     AsyncCallbackManagerForLLMRun = object  # type: ignore
