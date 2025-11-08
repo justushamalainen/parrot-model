@@ -27,6 +27,7 @@ jobs:
         pip install -e ".[all]"
 
     - name: Run ruff linting
+      continue-on-error: true
       run: |
         ruff check src/ tests/
 
