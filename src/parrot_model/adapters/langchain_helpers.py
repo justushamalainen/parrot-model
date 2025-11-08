@@ -17,8 +17,12 @@ Example:
 from __future__ import annotations
 
 import json
-import uuid
 from typing import Any
+
+from parrot_model.adapters._tool_call_utils import (
+    encode_tool_call_in_prompt,
+    generate_tool_call_id,
+)
 
 # Try to import LangChain components
 try:
@@ -77,14 +81,10 @@ def create_tool_call(
     """
     _check_langchain_available()
 
-    # Generate ID if not provided
-    if tool_call_id is None:
-        tool_call_id = str(uuid.uuid4())
-
     return ToolCall(
         name=tool_name,
         args=parameters,
-        id=tool_call_id,
+        id=generate_tool_call_id(tool_call_id),
     )
 
 
@@ -125,11 +125,10 @@ def create_tool_calls(
     """
     _check_langchain_available()
 
-    tool_call_list = []
-    for tool_name, parameters in calls:
-        tool_call_list.append(create_tool_call(tool_name, **parameters))
-
-    return tool_call_list
+    return [
+        create_tool_call(tool_name, **parameters)
+        for tool_name, parameters in calls
+    ]
 
 
 def create_tool_call_dict(
@@ -167,12 +166,8 @@ def create_tool_call_dict(
             }
         }
     """
-    # Generate ID if not provided
-    if tool_call_id is None:
-        tool_call_id = str(uuid.uuid4())
-
     return {
-        "id": tool_call_id,
+        "id": generate_tool_call_id(tool_call_id),
         "type": "function",
         "function": {
             "name": tool_name,
@@ -286,59 +281,11 @@ def create_multi_tool_call_message(
     """
     _check_langchain_available()
 
-    # Create all tool calls using LangChain's ToolCall class
-    tool_calls = []
-    for tool_name, parameters in calls:
-        tool_calls.append(create_tool_call(tool_name, **parameters))
-
-    # Create AIMessage with all tool calls
+    # Create AIMessage with all tool calls (reuse create_tool_calls for DRY)
     return AIMessage(
         content=content,
-        tool_calls=tool_calls
+        tool_calls=create_tool_calls(*calls)
     )
-
-
-def encode_tool_call_in_prompt(tool_name: str, **parameters: Any) -> str:
-    """
-    Encode a tool call in the Parrot Model's [TOOL:name|param=value] syntax.
-
-    This function creates a string that can be embedded in a message to trigger
-    tool calls when using the Parrot Model with LangChain/LangGraph.
-
-    Args:
-        tool_name: The name of the tool to call.
-        **parameters: Keyword arguments representing tool parameters.
-
-    Returns:
-        str: The encoded tool call string in [TOOL:name|param=value] format.
-
-    Example:
-        >>> from parrot_model.adapters.langchain_helpers import encode_tool_call_in_prompt
-        >>> from langchain_core.messages import HumanMessage
-        >>>
-        >>> # Create a tool call encoding
-        >>> encoding = encode_tool_call_in_prompt("get_weather", city="London", units="metric")
-        >>> encoding
-        '[TOOL:get_weather|city=London|units=metric]'
-        >>>
-        >>> # Use in a message
-        >>> message = HumanMessage(content=f"Check {encoding} today")
-        >>> # Result: "Check [TOOL:get_weather|city=London|units=metric] today"
-        >>>
-        >>> # Multiple tool calls in one message
-        >>> london = encode_tool_call_in_prompt("get_weather", city="London")
-        >>> paris = encode_tool_call_in_prompt("get_weather", city="Paris")
-        >>> message = HumanMessage(content=f"Compare {london} and {paris}")
-    """
-    if not parameters:
-        return f"[TOOL:{tool_name}|]"
-
-    # Sort parameters for consistency
-    param_parts = [f"{key}={value}" for key, value in sorted(parameters.items())]
-    param_string = "|".join(param_parts)
-
-    return f"[TOOL:{tool_name}|{param_string}]"
-
 
 __all__ = [
     "create_tool_call",

@@ -11,6 +11,65 @@ import uuid
 import pytest
 
 
+class TestSharedUtilities:
+    """Tests for shared utility functions used by both helper modules."""
+
+    def test_encode_tool_call_in_prompt(self):
+        """Test encoding tool calls in prompt format."""
+        from parrot_model.adapters._tool_call_utils import encode_tool_call_in_prompt
+
+        # Test with parameters
+        result = encode_tool_call_in_prompt("get_weather", city="London", units="metric")
+        assert result == "[TOOL:get_weather|city=London|units=metric]"
+
+        # Test without parameters
+        result = encode_tool_call_in_prompt("simple_tool")
+        assert result == "[TOOL:simple_tool|]"
+
+        # Test parameter ordering (should be sorted alphabetically)
+        result = encode_tool_call_in_prompt("test", z="last", a="first", m="middle")
+        assert result == "[TOOL:test|a=first|m=middle|z=last]"
+
+    def test_generate_tool_call_id_with_none(self):
+        """Test ID generation when no ID is provided."""
+        from parrot_model.adapters._tool_call_utils import generate_tool_call_id
+
+        # Generate two IDs and ensure they're different
+        id1 = generate_tool_call_id(None)
+        id2 = generate_tool_call_id(None)
+
+        assert isinstance(id1, str)
+        assert isinstance(id2, str)
+        assert id1 != id2  # Each call should generate unique ID
+        assert len(id1) == 36  # UUID4 format (with hyphens)
+
+    def test_generate_tool_call_id_with_custom(self):
+        """Test ID generation when custom ID is provided."""
+        from parrot_model.adapters._tool_call_utils import generate_tool_call_id
+
+        custom_id = "my-custom-id-123"
+        result = generate_tool_call_id(custom_id)
+
+        assert result == custom_id  # Should return the provided ID
+
+    def test_both_helpers_use_same_shared_function(self):
+        """Test that both helper modules use the same shared encoding function."""
+        from parrot_model.adapters.pydantic_ai_helpers import (
+            encode_tool_call_in_prompt as pa_encode,
+        )
+        from parrot_model.adapters.langchain_helpers import (
+            encode_tool_call_in_prompt as lc_encode,
+        )
+
+        # Both should produce the same result
+        params = {"city": "London", "units": "metric"}
+        pa_result = pa_encode("get_weather", **params)
+        lc_result = lc_encode("get_weather", **params)
+
+        assert pa_result == lc_result
+        assert pa_result == "[TOOL:get_weather|city=London|units=metric]"
+
+
 class TestPydanticAIHelpers:
     """Tests for Pydantic AI helper functions."""
 

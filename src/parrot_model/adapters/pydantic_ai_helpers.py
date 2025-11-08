@@ -14,8 +14,12 @@ Example:
 
 from __future__ import annotations
 
-import uuid
 from typing import Any
+
+from parrot_model.adapters._tool_call_utils import (
+    encode_tool_call_in_prompt,
+    generate_tool_call_id,
+)
 
 # Try to import Pydantic AI components
 try:
@@ -93,15 +97,11 @@ def create_tool_call(
     """
     _check_pydantic_ai_available()
 
-    # Generate ID if not provided
-    if tool_call_id is None:
-        tool_call_id = str(uuid.uuid4())
-
     # Create and return the ToolCallPart
     return ToolCallPart(
         tool_name=tool_name,
         args=parameters,
-        tool_call_id=tool_call_id
+        tool_call_id=generate_tool_call_id(tool_call_id)
     )
 
 
@@ -144,50 +144,10 @@ def create_tool_calls(
     """
     _check_pydantic_ai_available()
 
-    tool_call_parts = []
-    for tool_name, parameters in calls:
-        tool_call_parts.append(create_tool_call(tool_name, **parameters))
-
-    return tool_call_parts
-
-
-def encode_tool_call_in_prompt(tool_name: str, **parameters: Any) -> str:
-    """
-    Encode a tool call in the Parrot Model's [TOOL:name|param=value] syntax.
-
-    This function creates a string that can be embedded in a prompt message
-    to trigger tool calls when using the Parrot Model with Pydantic AI.
-
-    Args:
-        tool_name: The name of the tool to call.
-        **parameters: Keyword arguments representing tool parameters.
-
-    Returns:
-        str: The encoded tool call string in [TOOL:name|param=value] format.
-
-    Example:
-        >>> from parrot_model.adapters.pydantic_ai_helpers import encode_tool_call_in_prompt
-        >>>
-        >>> # Create a tool call encoding
-        >>> encoding = encode_tool_call_in_prompt("get_weather", city="London", units="metric")
-        >>> encoding
-        '[TOOL:get_weather|city=London|units=metric]'
-        >>>
-        >>> # Use in a message
-        >>> from pydantic_ai.messages import ModelRequest, UserPromptPart
-        >>> request = ModelRequest(parts=[
-        ...     UserPromptPart(content=f"Check {encoding} today")
-        ... ])
-        >>> # Result: "Check [TOOL:get_weather|city=London|units=metric] today"
-    """
-    if not parameters:
-        return f"[TOOL:{tool_name}|]"
-
-    # Sort parameters for consistency
-    param_parts = [f"{key}={value}" for key, value in sorted(parameters.items())]
-    param_string = "|".join(param_parts)
-
-    return f"[TOOL:{tool_name}|{param_string}]"
+    return [
+        create_tool_call(tool_name, **parameters)
+        for tool_name, parameters in calls
+    ]
 
 
 __all__ = [
