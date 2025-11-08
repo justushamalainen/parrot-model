@@ -263,7 +263,9 @@ class ParrotModel:
             {'city': 'London'}
 
             >>> # Multiple tool calls
-            >>> response = model.generate("[TOOL:get_weather|city=London] and [TOOL:get_weather|city=Paris]")
+            >>> response = model.generate(  # noqa: E501
+            ...     "[TOOL:get_weather|city=London] and [TOOL:get_weather|city=Paris]"
+            ... )
             >>> len(model.get_tool_calls())
             2
         """

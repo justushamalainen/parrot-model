@@ -19,18 +19,23 @@ It also includes helper modules for easily creating tool calls:
 __all__ = []
 
 # OpenAI SDK adapter - always available (no external dependencies)
-from parrot_model.adapters.openai import AsyncOpenAI, OpenAI
+from parrot_model.adapters.openai import AsyncOpenAI, OpenAI  # noqa: F401
 
 __all__.extend(["OpenAI", "AsyncOpenAI"])
 
 # Anthropic SDK adapter - always available (no external dependencies)
-from parrot_model.adapters.anthropic import Anthropic, AsyncAnthropic
+from parrot_model.adapters.anthropic import (  # noqa: F401, E402
+    Anthropic,
+    AsyncAnthropic,
+)
 
 __all__.extend(["Anthropic", "AsyncAnthropic"])
 
 # Pydantic AI adapter - exported conditionally based on availability
 try:
-    from parrot_model.adapters.pydantic_ai import ParrotPydanticModel
+    from parrot_model.adapters.pydantic_ai import (  # noqa: F401
+        ParrotPydanticModel,
+    )
 
     __all__.append("ParrotPydanticModel")
 except ImportError:
@@ -39,7 +44,7 @@ except ImportError:
 
 # Pydantic AI helpers - exported conditionally based on availability
 try:
-    from parrot_model.adapters import pydantic_ai_helpers
+    from parrot_model.adapters import pydantic_ai_helpers  # noqa: F401
 
     __all__.append("pydantic_ai_helpers")
 except ImportError:
@@ -48,7 +53,7 @@ except ImportError:
 
 # LangChain adapter - exported conditionally based on availability
 try:
-    from parrot_model.adapters.langchain import ParrotChatModel
+    from parrot_model.adapters.langchain import ParrotChatModel  # noqa: F401
 
     __all__.append("ParrotChatModel")
 except ImportError:
@@ -57,7 +62,7 @@ except ImportError:
 
 # LangChain helpers - exported conditionally based on availability
 try:
-    from parrot_model.adapters import langchain_helpers
+    from parrot_model.adapters import langchain_helpers  # noqa: F401
 
     __all__.append("langchain_helpers")
 except ImportError:

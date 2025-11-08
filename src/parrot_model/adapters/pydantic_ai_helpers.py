@@ -46,7 +46,7 @@ def create_tool_call(
     tool_name: str,
     tool_call_id: str | None = None,
     **parameters: Any
-) -> "ToolCallPart":
+) -> ToolCallPart:
     """
     Create a Pydantic AI ToolCallPart for use in messages.
 

@@ -15,7 +15,6 @@ import pytest
 from parrot_model.core.base import ParrotModel
 from parrot_model.core.config import ParrotConfig
 
-
 # ============================================================================
 # Core Functionality Tests (3 tests)
 # ============================================================================

@@ -11,10 +11,10 @@ Note: This adapter targets Pydantic AI v0.1.x+ (2025 API).
 
 from __future__ import annotations
 
-import sys
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
-from typing import TYPE_CHECKING, Any, AsyncIterator
+from typing import TYPE_CHECKING
 
 from parrot_model.core.base import ParrotModel
 from parrot_model.core.config import ParrotConfig
@@ -27,7 +27,6 @@ try:
     from pydantic_ai.messages import (
         ModelMessage,
         ModelRequest,
-        ModelRequestPart,
         ModelResponse,
         SystemPromptPart,
         TextPart,
@@ -35,10 +34,13 @@ try:
         ToolReturnPart,
         UserPromptPart,
     )
-    from pydantic_ai.models import Model, StreamedResponse
-    from pydantic_ai.models.base import ModelRequestParameters
-    from pydantic_ai.result import RequestUsage
-    from pydantic_ai.settings import ModelSettings
+    from pydantic_ai.models import (
+        Model,
+        ModelRequestParameters,
+        ModelSettings,
+        RequestUsage,
+        StreamedResponse,
+    )
 
     PYDANTIC_AI_AVAILABLE = True
 except ImportError:
@@ -50,10 +52,13 @@ except ImportError:
             ModelMessage,
             ModelResponse,
         )
-        from pydantic_ai.models import Model, StreamedResponse
-        from pydantic_ai.models.base import ModelRequestParameters
-        from pydantic_ai.result import RequestUsage
-        from pydantic_ai.settings import ModelSettings
+        from pydantic_ai.models import (
+            Model,
+            ModelRequestParameters,
+            ModelSettings,
+            RequestUsage,
+            StreamedResponse,
+        )
 
 
 def _check_pydantic_ai_available():
@@ -174,7 +179,7 @@ class ParrotPydanticModel(Model if PYDANTIC_AI_AVAILABLE else object):
         """
         return self._system
 
-    def _messages_to_string(self, messages: list["ModelMessage"]) -> str:
+    def _messages_to_string(self, messages: list[ModelMessage]) -> str:
         """
         Convert Pydantic AI messages to a single string for ParrotModel.
 
@@ -225,8 +230,8 @@ class ParrotPydanticModel(Model if PYDANTIC_AI_AVAILABLE else object):
         return combined
 
     def _parrot_tools_to_pydantic(
-        self, tool_calls: list["ToolCall"]
-    ) -> list["ToolCallPart"]:
+        self, tool_calls: list[ToolCall]
+    ) -> list[ToolCallPart]:
         """
         Convert ParrotModel ToolCall objects to Pydantic AI ToolCallPart objects.
 
@@ -264,10 +269,10 @@ class ParrotPydanticModel(Model if PYDANTIC_AI_AVAILABLE else object):
 
     async def request(
         self,
-        messages: list["ModelMessage"],
-        model_settings: "ModelSettings | None",
-        model_request_parameters: "ModelRequestParameters",
-    ) -> "ModelResponse":
+        messages: list[ModelMessage],
+        model_settings: ModelSettings | None,
+        model_request_parameters: ModelRequestParameters,
+    ) -> ModelResponse:
         """
         Make a non-streaming request to the ParrotModel.
 
@@ -326,10 +331,10 @@ class ParrotPydanticModel(Model if PYDANTIC_AI_AVAILABLE else object):
     @asynccontextmanager
     async def request_stream(
         self,
-        messages: list["ModelMessage"],
-        model_settings: "ModelSettings | None",
-        model_request_parameters: "ModelRequestParameters",
-    ) -> AsyncIterator["StreamedResponse"]:
+        messages: list[ModelMessage],
+        model_settings: ModelSettings | None,
+        model_request_parameters: ModelRequestParameters,
+    ) -> AsyncIterator[StreamedResponse]:
         """
         Make a streaming request to the ParrotModel.
 
@@ -426,7 +431,7 @@ if PYDANTIC_AI_AVAILABLE:
 
             self._finished = True
 
-        def get(self, *, final: bool = False) -> "ModelResponse":
+        def get(self, *, final: bool = False) -> ModelResponse:
             """
             Get the current or final ModelResponse.
 
@@ -478,7 +483,7 @@ if PYDANTIC_AI_AVAILABLE:
                 timestamp=datetime.now(timezone.utc),
             )
 
-        def usage(self) -> "RequestUsage | None":
+        def usage(self) -> RequestUsage | None:
             """
             Get token usage information.
 

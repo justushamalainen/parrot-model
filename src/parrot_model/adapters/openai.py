@@ -37,7 +37,7 @@ import json
 import time
 import uuid
 from collections.abc import AsyncIterator, Iterator
-from typing import Any, Literal
+from typing import Any
 
 from parrot_model.core.base import ParrotModel
 from parrot_model.core.config import ParrotConfig
@@ -78,7 +78,10 @@ class Choice:
         self.finish_reason = finish_reason
 
     def __repr__(self) -> str:
-        return f"Choice(index={self.index}, message={self.message}, finish_reason={self.finish_reason!r})"
+        return (
+            f"Choice(index={self.index}, message={self.message}, "
+            f"finish_reason={self.finish_reason!r})"
+        )
 
 
 class ChatCompletion:
