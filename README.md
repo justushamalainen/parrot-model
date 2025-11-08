@@ -58,12 +58,13 @@ print(response)  # Output: "Hello, world!"
 ### With Pydantic AI
 
 ```python
-from parrot_model.adapters import ParrotPydanticProvider
+from parrot_model.adapters.pydantic_ai import ParrotPydanticModel
+from parrot_model.core.config import ParrotConfig
 from pydantic_ai import Agent
 
 # Use parrot model as your LLM provider
-provider = ParrotPydanticProvider(max_tokens=100)
-agent = Agent(model=provider)
+model = ParrotPydanticModel(config=ParrotConfig(max_tokens=100))
+agent = Agent(model)
 
 result = agent.run_sync("What's the weather like?")
 print(result.data)
@@ -227,12 +228,12 @@ def test_chat_response(chat_model):
 ### Development
 
 ```python
-from parrot_model.adapters import ParrotPydanticProvider
+from parrot_model.adapters.pydantic_ai import ParrotPydanticModel
 from pydantic_ai import Agent
 
 # Develop your agent logic without API costs
-provider = ParrotPydanticProvider()
-agent = Agent(model=provider)
+model = ParrotPydanticModel()
+agent = Agent(model)
 
 # Test your prompts and flows locally
 result = agent.run_sync("Test prompt")
