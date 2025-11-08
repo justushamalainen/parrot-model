@@ -2,12 +2,27 @@
 Framework adapters for the Parrot Model.
 
 This module contains adapters that integrate the Parrot Model with
-various LLM frameworks, including Pydantic AI and LangChain/LangGraph.
+various LLM frameworks and SDKs, including:
+- OpenAI SDK (drop-in replacement)
+- Anthropic SDK (drop-in replacement)
+- Pydantic AI
+- LangChain/LangGraph
+
 Each adapter translates between the framework-specific interfaces and
 the core Parrot Model functionality.
 """
 
 __all__ = []
+
+# OpenAI SDK adapter - always available (no external dependencies)
+from parrot_model.adapters.openai import AsyncOpenAI, OpenAI
+
+__all__.extend(["OpenAI", "AsyncOpenAI"])
+
+# Anthropic SDK adapter - always available (no external dependencies)
+from parrot_model.adapters.anthropic import Anthropic, AsyncAnthropic
+
+__all__.extend(["Anthropic", "AsyncAnthropic"])
 
 # Pydantic AI adapter - exported conditionally based on availability
 try:

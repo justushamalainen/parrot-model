@@ -40,6 +40,10 @@ class ParrotConfig:
         echo_system_messages: Whether to include system messages in echo mode.
             If False (default), system messages are filtered out and only user
             messages are echoed back.
+        deterministic: Whether to use deterministic IDs and timestamps. When True
+            (default), the same inputs will always produce the same IDs and timestamps,
+            making responses fully reproducible. When False, random UUIDs and current
+            timestamps are used (useful for more realistic API simulation).
 
     Example:
         >>> config = ParrotConfig(
@@ -58,3 +62,4 @@ class ParrotConfig:
     enable_tool_calls: bool = True
     tool_call_pattern: str = r"\[TOOL:(\w+)\|(.+?)\]"
     echo_system_messages: bool = False
+    deterministic: bool = True  # Use deterministic IDs and timestamps by default
