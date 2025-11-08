@@ -131,6 +131,57 @@ response = model.generate(message)
 "Check weather in [TOOL:get_weather|city=London] and [TOOL:get_weather|city=Paris]"
 ```
 
+### Tool Call Helpers
+
+Parrot Model provides helper functions to easily create tool calls for both Pydantic AI and LangChain/LangGraph:
+
+#### Pydantic AI Helpers
+
+```python
+from parrot_model.adapters.pydantic_ai_helpers import (
+    create_tool_call,
+    create_tool_calls,
+    encode_tool_call_in_prompt
+)
+
+# Create a single tool call
+tool_call = create_tool_call("get_weather", city="London", units="metric")
+
+# Create multiple tool calls at once
+tool_calls = create_tool_calls(
+    ("get_weather", {"city": "London"}),
+    ("get_time", {"timezone": "UTC"})
+)
+
+# Encode a tool call for use in prompts
+encoding = encode_tool_call_in_prompt("get_weather", city="London")
+# Returns: "[TOOL:get_weather|city=London]"
+```
+
+#### LangChain/LangGraph Helpers
+
+```python
+from parrot_model.adapters.langchain_helpers import (
+    create_tool_call_message,
+    create_multi_tool_call_message,
+    encode_tool_call_in_prompt
+)
+
+# Create an AI message with a tool call
+message = create_tool_call_message("get_weather", city="London")
+
+# Create a message with multiple tool calls
+message = create_multi_tool_call_message(
+    ("get_weather", {"city": "London"}),
+    ("get_time", {"timezone": "UTC"}),
+    content="Checking multiple locations"
+)
+
+# Encode a tool call for use in prompts
+encoding = encode_tool_call_in_prompt("get_weather", city="London")
+# Returns: "[TOOL:get_weather|city=London]"
+```
+
 ## Configuration
 
 ```python
@@ -263,7 +314,9 @@ Check out the [examples/](./examples/) directory for more:
 
 - `basic_usage.py` - Core functionality
 - `pydantic_ai_example.py` - Pydantic AI integration
+- `pydantic_ai_tool_helpers.py` - Pydantic AI tool call helpers
 - `langchain_example.py` - LangChain integration
+- `langchain_tool_helpers.py` - LangChain/LangGraph tool call helpers
 - `tool_calls_example.py` - Tool calling examples
 
 ## Development
