@@ -103,14 +103,15 @@ class ParrotModel:
             >>> len(model.get_tool_calls())
             1
         """
-        # Parse tool calls if enabled
+        # Parse tool calls once if enabled, getting clean message
         if self.config.enable_tool_calls:
-            _, self.tool_calls = self._generator.parse_tool_calls(message)
+            clean_message, self.tool_calls = self._generator.parse_tool_calls(message)
         else:
+            clean_message = message
             self.tool_calls = []
 
-        # Generate the response
-        return self._generator.generate(message)
+        # Generate the response from clean message
+        return self._generator.generate(clean_message)
 
     async def agenerate(self, message: str) -> str:
         """

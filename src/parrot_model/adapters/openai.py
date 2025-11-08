@@ -157,8 +157,8 @@ class ChatCompletionChunk:
         return f"ChatCompletionChunk(id={self.id!r})"
 
 
-class Completions:
-    """Mimics OpenAI's chat.completions interface."""
+class CompletionsBase:
+    """Base class with shared logic for sync and async completions."""
 
     def __init__(self, parrot_config: ParrotConfig | None = None):
         self._parrot_config = parrot_config or ParrotConfig()
@@ -212,6 +212,10 @@ class Completions:
             return get_deterministic_timestamp()
         else:
             return int(time.time())
+
+
+class Completions(CompletionsBase):
+    """Mimics OpenAI's chat.completions interface."""
 
     def create(
         self,
@@ -350,61 +354,8 @@ class Completions:
             )
 
 
-class AsyncCompletions:
+class AsyncCompletions(CompletionsBase):
     """Mimics OpenAI's async chat.completions interface."""
-
-    def __init__(self, parrot_config: ParrotConfig | None = None):
-        self._parrot_config = parrot_config or ParrotConfig()
-        self._parrot_model = ParrotModel(config=self._parrot_config)
-
-    def _convert_messages_to_string(
-        self, messages: list[dict[str, Any]]
-    ) -> str:
-        """Convert OpenAI message format to a string for ParrotModel."""
-        parts = []
-        for msg in messages:
-            role = msg.get("role", "user")
-            content = msg.get("content", "")
-
-            # Skip system messages unless configured to echo them
-            if role == "system" and not self._parrot_config.echo_system_messages:
-                continue
-
-            parts.append(str(content))
-
-        return " ".join(parts)
-
-    def _format_tool_calls(self, tool_calls: list[Any]) -> list[dict[str, Any]]:
-        """Format ParrotModel tool calls to OpenAI format."""
-        formatted_calls = []
-        for tc in tool_calls:
-            formatted_calls.append(
-                {
-                    "id": tc.id,
-                    "type": "function",
-                    "function": {
-                        "name": tc.name,
-                        "arguments": json.dumps(tc.parameters),
-                    },
-                }
-            )
-        return formatted_calls
-
-    def _generate_completion_id(self, prompt: str, model: str) -> str:
-        """Generate a completion ID based on deterministic config."""
-        if self._parrot_config.deterministic:
-            return generate_deterministic_id(
-                prompt, model, prefix="chatcmpl-", length=8
-            )
-        else:
-            return f"chatcmpl-{uuid.uuid4().hex[:8]}"
-
-    def _get_timestamp(self) -> int:
-        """Get timestamp based on deterministic config."""
-        if self._parrot_config.deterministic:
-            return get_deterministic_timestamp()
-        else:
-            return int(time.time())
 
     async def create(
         self,

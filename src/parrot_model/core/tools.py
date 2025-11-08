@@ -59,7 +59,7 @@ class ToolCallParser:
         pattern: Compiled regular expression pattern for matching tool calls.
 
     Example:
-        >>> parser = ToolCallParser(r"\[TOOL:(\w+)\|(.+?)\]")
+        >>> parser = ToolCallParser(r"\\[TOOL:(\\w+)\\|(.+?)\\]")
         >>> message = "Check [TOOL:get_weather|city=London] and [TOOL:get_weather|city=Paris]"
         >>> tool_calls = parser.parse(message)
         >>> len(tool_calls)
@@ -82,8 +82,8 @@ class ToolCallParser:
                           UUIDs are used.
 
         Example:
-            >>> parser = ToolCallParser(r"\[TOOL:(\w+)\|(.+?)\]")
-            >>> parser_random = ToolCallParser(r"\[TOOL:(\w+)\|(.+?)\]", deterministic=False)
+            >>> parser = ToolCallParser(r"\\[TOOL:(\\w+)\\|(.+?)\\]")
+            >>> parser_random = ToolCallParser(r"\\[TOOL:(\\w+)\\|(.+?)\\]", deterministic=False)
         """
         self.pattern = re.compile(pattern)
         self.deterministic = deterministic
@@ -102,7 +102,7 @@ class ToolCallParser:
             List of ToolCall objects found in the message. Empty list if none found.
 
         Example:
-            >>> parser = ToolCallParser(r"\[TOOL:(\w+)\|(.+?)\]")
+            >>> parser = ToolCallParser(r"\\[TOOL:(\\w+)\\|(.+?)\\]")
             >>> message = "Get [TOOL:get_weather|city=London|units=metric]"
             >>> tool_calls = parser.parse(message)
             >>> tool_calls[0].name
@@ -156,7 +156,7 @@ class ToolCallParser:
             The message with all tool call encodings removed and whitespace normalized.
 
         Example:
-            >>> parser = ToolCallParser(r"\[TOOL:(\w+)\|(.+?)\]")
+            >>> parser = ToolCallParser(r"\\[TOOL:(\\w+)\\|(.+?)\\]")
             >>> message = "Check [TOOL:get_weather|city=London] today"
             >>> parser.remove_from_message(message)
             'Check today'

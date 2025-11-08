@@ -33,15 +33,16 @@ def count_tokens(text: str) -> int:
     return len(text.split())
 
 
-def truncate_to_tokens(text: str, max_tokens: int, at_word: bool = True) -> str:
+def truncate_to_tokens(text: str, max_tokens: int) -> str:
     """
-    Truncate text to a maximum number of tokens.
+    Truncate text to a maximum number of tokens (whitespace-separated words).
+
+    Since this uses whitespace-based tokenization, truncation naturally occurs
+    at word boundaries.
 
     Args:
         text: The text to truncate.
         max_tokens: Maximum number of tokens to keep.
-        at_word: If True, truncate at word boundaries. If False, split at
-            exact token count (same behavior since we're using whitespace tokens).
 
     Returns:
         Truncated text with at most max_tokens tokens.
@@ -61,8 +62,6 @@ def truncate_to_tokens(text: str, max_tokens: int, at_word: bool = True) -> str:
     if len(tokens) <= max_tokens:
         return text
 
-    # For whitespace-based tokenization, at_word doesn't make a difference
-    # since we're already splitting on words
     return " ".join(tokens[:max_tokens])
 
 
