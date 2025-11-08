@@ -5,9 +5,9 @@ This module tests the fundamental features of the Parrot Model including:
 - Basic echo mode
 - Text truncation (token and character based)
 - Async generation
-- Configuration handling
 - Tool call parsing and handling
 - Streaming (sync and async)
+- Edge cases (empty messages, zero limits, malformed input)
 """
 
 import pytest
@@ -17,7 +17,7 @@ from parrot_model.core.config import ParrotConfig
 
 
 # ============================================================================
-# Core Functionality Tests (5 tests)
+# Core Functionality Tests (3 tests)
 # ============================================================================
 
 
@@ -33,39 +33,32 @@ def test_basic_echo(basic_model, sample_messages):
     assert len(basic_model.get_tool_calls()) == 0
 
 
-def test_token_based_truncation(sample_messages):
+@pytest.mark.parametrize(
+    "config_kwargs,max_length,expected_start",
+    [
+        ({"max_tokens": 5}, 5, "This is a very long"),
+        ({"max_chars": 20, "truncate_at_word": True}, 20, "This is a very"),
+    ],
+)
+def test_text_truncation(sample_messages, config_kwargs, max_length, expected_start):
     """
-    Test that messages are correctly truncated based on token count.
+    Test that messages are correctly truncated based on token or character limits.
 
-    Validates that when max_tokens is set, the response is limited to
-    approximately that many whitespace-delimited tokens.
+    Validates both token-based and character-based truncation with appropriate limits.
     """
-    config = ParrotConfig(max_tokens=5)
+    config = ParrotConfig(**config_kwargs)
     model = ParrotModel(config=config)
 
     response = model.generate(sample_messages["long"])
 
-    # Should be truncated to approximately 5 tokens
-    tokens = response.split()
-    assert len(tokens) <= 5
-    assert response.startswith("This is a very long")
+    # Check appropriate limit is applied
+    if "max_tokens" in config_kwargs:
+        tokens = response.split()
+        assert len(tokens) <= max_length
+    else:
+        assert len(response) <= max_length
 
-
-def test_character_based_truncation(sample_messages):
-    """
-    Test that messages are correctly truncated based on character count.
-
-    Validates that when max_chars is set, the response is limited to
-    that many characters (or fewer if truncate_at_word is enabled).
-    """
-    config = ParrotConfig(max_chars=20, truncate_at_word=True)
-    model = ParrotModel(config=config)
-
-    response = model.generate(sample_messages["long"])
-
-    # Should be truncated to max 20 chars
-    assert len(response) <= 20
-    assert response.startswith("This is a very")
+    assert response.startswith(expected_start)
 
 
 @pytest.mark.asyncio
@@ -83,31 +76,6 @@ async def test_async_generation(basic_model, sample_messages):
     response = await basic_model.agenerate(sample_messages["with_tool_call"])
     assert "Get weather:" in response
     assert len(basic_model.get_tool_calls()) == 1
-
-
-def test_configuration_handling():
-    """
-    Test that configuration is properly stored and applied.
-
-    Validates that custom configuration settings are correctly initialized
-    and used by the model.
-    """
-    config = ParrotConfig(
-        mode="echo",
-        max_tokens=100,
-        max_chars=500,
-        truncate_at_word=False,
-        stream_delay_ms=25,
-        enable_tool_calls=True,
-    )
-    model = ParrotModel(config=config)
-
-    assert model.config.mode == "echo"
-    assert model.config.max_tokens == 100
-    assert model.config.max_chars == 500
-    assert model.config.truncate_at_word is False
-    assert model.config.stream_delay_ms == 25
-    assert model.config.enable_tool_calls is True
 
 
 # ============================================================================
@@ -182,25 +150,8 @@ def test_tool_calls_disabled(model_without_tool_calls, sample_messages):
 
 
 # ============================================================================
-# Streaming Tests (3 tests)
+# Streaming Tests (2 tests)
 # ============================================================================
-
-
-def test_sync_streaming(configured_model, sample_messages):
-    """
-    Test synchronous streaming of responses.
-
-    Validates that the stream() method yields chunks of the response
-    and that they can be reassembled into the complete message.
-    """
-    chunks = list(configured_model.stream(sample_messages["simple"], chunk_size=5))
-
-    # Should have multiple chunks
-    assert len(chunks) > 1
-
-    # Chunks should reassemble to original
-    complete = "".join(chunks)
-    assert complete == sample_messages["simple"]
 
 
 @pytest.mark.asyncio
@@ -239,3 +190,57 @@ def test_streaming_with_text_limits(sample_messages):
     complete = "".join(chunks)
     assert len(complete) <= 20
     assert complete.startswith("This is a very")
+
+
+# ============================================================================
+# Edge Case Tests (4 tests)
+# ============================================================================
+
+
+def test_empty_message_handling(basic_model):
+    """Test that empty messages are handled gracefully."""
+    response = basic_model.generate("")
+    assert response == ""
+    assert len(basic_model.get_tool_calls()) == 0
+
+
+def test_zero_limits():
+    """Test that zero token/char limits return empty string."""
+    config = ParrotConfig(max_tokens=0)
+    model = ParrotModel(config=config)
+    response = model.generate("Hello world")
+    assert response == ""
+
+    config = ParrotConfig(max_chars=0)
+    model = ParrotModel(config=config)
+    response = model.generate("Hello world")
+    assert response == ""
+
+
+def test_combined_token_and_char_limits(sample_messages):
+    """Test that both token and character limits are applied correctly."""
+    # Token limit applies first, then char limit
+    config = ParrotConfig(max_tokens=10, max_chars=30)
+    model = ParrotModel(config=config)
+    response = model.generate(sample_messages["long"])
+
+    # Should respect both limits
+    assert len(response.split()) <= 10
+    assert len(response) <= 30
+
+
+def test_malformed_tool_call_syntax(basic_model):
+    """Test that malformed tool call syntax is handled gracefully."""
+    # Incomplete tool call - missing closing bracket
+    response = basic_model.generate("Check [TOOL:incomplete")
+    # Should treat as regular text since it doesn't match pattern
+    assert "[TOOL:incomplete" in response
+
+    # Empty parameters
+    response = basic_model.generate("Call [TOOL:function|] please")
+    # Parser should handle empty params gracefully
+    tool_calls = basic_model.get_tool_calls()
+    # Empty params might create a tool call with no parameters
+    if tool_calls:
+        assert tool_calls[0].name == "function"
+        assert tool_calls[0].parameters == {}

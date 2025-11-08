@@ -94,11 +94,12 @@ class ResponseGenerator:
         Generate a response based on the input message and configuration.
 
         Currently supports only "echo" mode, which returns the message as-is
-        (with optional text limiting applied). If tool calls are enabled,
-        they are parsed and the tool call syntax is removed from the response.
+        (with optional text limiting applied). The message should already have
+        tool call syntax removed if tool calls were enabled.
 
         Args:
             message: The input message to generate a response for.
+                    Should be pre-cleaned of tool call syntax.
 
         Returns:
             The generated response string.
@@ -112,10 +113,6 @@ class ResponseGenerator:
             >>> generator.generate("Hello world!")
             'Hello'
         """
-        # Parse tool calls if enabled (this also cleans the message)
-        if self.tool_parser:
-            message, _ = self.parse_tool_calls(message)
-
         # Generate base response based on mode
         if self.config.mode == "echo":
             response = message
@@ -155,9 +152,7 @@ class ResponseGenerator:
 
         # Apply token limit first if configured
         if self.config.max_tokens is not None:
-            text = truncate_to_tokens(
-                text, self.config.max_tokens, at_word=self.config.truncate_at_word
-            )
+            text = truncate_to_tokens(text, self.config.max_tokens)
 
         # Apply character limit if configured
         if self.config.max_chars is not None:

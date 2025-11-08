@@ -67,39 +67,3 @@ def parse_tool_parameters(param_string: str) -> dict[str, str]:
             parameters[key] = value
 
     return parameters
-
-
-def extract_quoted_value(value: str) -> str:
-    """
-    Extract value from quotes if present.
-
-    Removes surrounding single or double quotes from a value string.
-    If the value is not quoted, returns it as-is.
-
-    Args:
-        value: The value string to process.
-
-    Returns:
-        The value with quotes removed if present, otherwise the original value.
-
-    Example:
-        >>> extract_quoted_value('"Hello World"')
-        'Hello World'
-        >>> extract_quoted_value("'Hello World'")
-        'Hello World'
-        >>> extract_quoted_value('Hello World')
-        'Hello World'
-        >>> extract_quoted_value('""')
-        ''
-    """
-    value = value.strip()
-
-    # Check for double quotes
-    if value.startswith('"') and value.endswith('"') and len(value) >= 2:
-        return value[1:-1]
-
-    # Check for single quotes
-    if value.startswith("'") and value.endswith("'") and len(value) >= 2:
-        return value[1:-1]
-
-    return value
