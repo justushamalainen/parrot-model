@@ -7,7 +7,6 @@ tool calls for Pydantic AI agents.
 
 from parrot_model.adapters.pydantic_ai_helpers import (
     create_tool_call,
-    create_tool_calls,
     encode_tool_call_in_prompt,
 )
 
@@ -41,15 +40,16 @@ def example_single_tool_call():
 
 
 def example_multiple_tool_calls():
-    """Example: Creating multiple tool calls at once."""
+    """Example: Creating multiple tool calls with list comprehension."""
     print("\n=== Example 2: Multiple Tool Calls ===\n")
 
-    # Create multiple tool calls at once
-    tool_calls = create_tool_calls(
+    # Create multiple tool calls using list comprehension
+    calls = [
         ("get_weather", {"city": "London"}),
         ("get_weather", {"city": "Paris"}),
         ("get_time", {"timezone": "UTC"}),
-    )
+    ]
+    tool_calls = [create_tool_call(name, **params) for name, params in calls]
 
     print(f"Created {len(tool_calls)} tool calls:")
     for i, tc in enumerate(tool_calls, 1):

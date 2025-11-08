@@ -140,18 +140,22 @@ Parrot Model provides helper functions to easily create tool calls for both Pyda
 ```python
 from parrot_model.adapters.pydantic_ai_helpers import (
     create_tool_call,
-    create_tool_calls,
     encode_tool_call_in_prompt
 )
+from pydantic_ai.messages import ModelRequest
 
 # Create a single ToolCallPart (Pydantic AI's native class)
 tool_call = create_tool_call("get_weather", city="London", units="metric")
 
-# Create multiple tool calls at once
-tool_calls = create_tool_calls(
+# Create multiple tool calls with list comprehension
+calls = [
     ("get_weather", {"city": "London"}),
     ("get_time", {"timezone": "UTC"})
-)
+]
+tool_calls = [create_tool_call(name, **params) for name, params in calls]
+
+# Use tool calls in a ModelRequest
+request = ModelRequest(parts=tool_calls)
 
 # Encode a tool call for use in prompts
 encoding = encode_tool_call_in_prompt("get_weather", city="London")
@@ -163,29 +167,26 @@ encoding = encode_tool_call_in_prompt("get_weather", city="London")
 ```python
 from parrot_model.adapters.langchain_helpers import (
     create_tool_call,
-    create_tool_calls,
-    create_tool_call_message,
-    create_multi_tool_call_message,
     encode_tool_call_in_prompt
 )
+from langchain_core.messages import AIMessage
 
 # Create a ToolCall object (LangChain's native class)
 tool_call = create_tool_call("get_weather", city="London")
 
-# Create multiple ToolCall objects at once
-tool_calls = create_tool_calls(
-    ("get_weather", {"city": "London"}),
-    ("get_time", {"timezone": "UTC"})
-)
+# Use in an AIMessage
+message = AIMessage(content="Checking weather", tool_calls=[tool_call])
 
-# Create an AI message with a tool call
-message = create_tool_call_message("get_weather", city="London")
+# Create multiple tool calls with list comprehension
+tool_calls = [
+    create_tool_call("get_weather", city="London"),
+    create_tool_call("get_time", timezone="UTC")
+]
 
-# Create a message with multiple tool calls
-message = create_multi_tool_call_message(
-    ("get_weather", {"city": "London"}),
-    ("get_time", {"timezone": "UTC"}),
-    content="Checking multiple locations"
+# Use in an AIMessage with multiple tool calls
+message = AIMessage(
+    content="Checking multiple locations",
+    tool_calls=tool_calls
 )
 
 # Encode a tool call for use in prompts

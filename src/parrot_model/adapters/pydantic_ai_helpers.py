@@ -105,53 +105,7 @@ def create_tool_call(
     )
 
 
-def create_tool_calls(
-    *calls: tuple[str, dict[str, Any]]
-) -> list["ToolCallPart"]:
-    """
-    Create multiple Pydantic AI ToolCallPart objects at once.
-
-    This is a convenience function for creating multiple tool calls in a single
-    call. Each tool call is specified as a tuple of (tool_name, parameters_dict).
-
-    Args:
-        *calls: Variable number of tuples, each containing:
-               - tool_name (str): The name of the tool
-               - parameters (dict): Dictionary of parameters for the tool
-
-    Returns:
-        list[ToolCallPart]: List of ToolCallPart objects.
-
-    Raises:
-        ImportError: If pydantic-ai is not installed.
-
-    Example:
-        >>> from parrot_model.adapters.pydantic_ai_helpers import create_tool_calls
-        >>>
-        >>> # Create multiple tool calls at once
-        >>> tool_calls = create_tool_calls(
-        ...     ("get_weather", {"city": "London"}),
-        ...     ("get_weather", {"city": "Paris"}),
-        ...     ("get_time", {"timezone": "UTC"})
-        ... )
-        >>>
-        >>> # Use in a ModelRequest
-        >>> from pydantic_ai.messages import ModelRequest, UserPromptPart
-        >>> request = ModelRequest(parts=[
-        ...     UserPromptPart(content="Check weather in multiple cities"),
-        ...     *tool_calls
-        ... ])
-    """
-    _check_pydantic_ai_available()
-
-    return [
-        create_tool_call(tool_name, **parameters)
-        for tool_name, parameters in calls
-    ]
-
-
 __all__ = [
     "create_tool_call",
-    "create_tool_calls",
     "encode_tool_call_in_prompt",
 ]

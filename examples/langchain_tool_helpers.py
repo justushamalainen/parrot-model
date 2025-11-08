@@ -6,16 +6,12 @@ tool calls for LangChain chains and LangGraph workflows.
 """
 
 from parrot_model.adapters.langchain_helpers import (
-    create_multi_tool_call_message,
     create_tool_call,
-    create_tool_call_dict,
-    create_tool_call_message,
-    create_tool_calls,
     encode_tool_call_in_prompt,
 )
 
 try:
-    from langchain_core.messages import HumanMessage
+    from langchain_core.messages import AIMessage, HumanMessage
 
     from parrot_model.adapters.langchain import ParrotChatModel
 except ImportError:
@@ -26,7 +22,7 @@ except ImportError:
 
 def example_create_tool_call():
     """Example: Creating a ToolCall object using LangChain's native class."""
-    print("\n=== Example 1: Native ToolCall Object ===\n")
+    print("\n=== Example 1: Single ToolCall Object ===\n")
 
     # Create a tool call using LangChain's native ToolCall class
     tool_call = create_tool_call("get_weather", city="London", units="metric")
@@ -37,69 +33,49 @@ def example_create_tool_call():
     print(f"Tool call ID: {tool_call.id}")
 
     # Use directly in an AIMessage
-    try:
-        from langchain_core.messages import AIMessage
-
-        message = AIMessage(content="Checking weather", tool_calls=[tool_call])
-        print(f"\nCreated AIMessage with {len(message.tool_calls)} tool call(s)")
-    except ImportError:
-        print("\nSkipping AIMessage example (langchain not installed)")
+    message = AIMessage(content="Checking weather", tool_calls=[tool_call])
+    print(f"\nCreated AIMessage with {len(message.tool_calls)} tool call(s)")
 
 
 def example_create_multiple_tool_calls():
-    """Example: Creating multiple ToolCall objects at once."""
+    """Example: Creating multiple ToolCall objects using list comprehension."""
     print("\n=== Example 2: Multiple ToolCall Objects ===\n")
 
-    # Create multiple tool calls at once
-    tool_calls = create_tool_calls(
+    # Create multiple tool calls using list comprehension
+    calls = [
         ("get_weather", {"city": "London"}),
         ("get_weather", {"city": "Paris"}),
         ("get_time", {"timezone": "UTC"}),
-    )
+    ]
+    tool_calls = [create_tool_call(name, **params) for name, params in calls]
 
     print(f"Created {len(tool_calls)} tool calls:")
     for i, tc in enumerate(tool_calls, 1):
         print(f"  {i}. {tc.name} with args: {tc.args}")
 
     # Use in an AIMessage
-    try:
-        from langchain_core.messages import AIMessage
-
-        message = AIMessage(content="Processing multiple requests", tool_calls=tool_calls)
-        print(f"\nCreated AIMessage with {len(message.tool_calls)} tool call(s)")
-    except ImportError:
-        print("\nSkipping AIMessage example (langchain not installed)")
-
-
-def example_tool_call_dict():
-    """Example: Creating a tool call dictionary (legacy format)."""
-    print("\n=== Example 3: Tool Call Dictionary (Legacy) ===\n")
-
-    # Create a tool call dictionary (OpenAI format)
-    tool_call = create_tool_call_dict("get_weather", city="London", units="metric")
-
-    print(f"Tool call ID: {tool_call['id']}")
-    print(f"Type: {tool_call['type']}")
-    print(f"Function name: {tool_call['function']['name']}")
-    print(f"Arguments: {tool_call['function']['arguments']}")
+    message = AIMessage(content="Processing multiple requests", tool_calls=tool_calls)
+    print(f"\nCreated AIMessage with {len(message.tool_calls)} tool call(s)")
 
 
 def example_single_tool_call_message():
     """Example: Creating a message with a single tool call."""
-    print("\n=== Example 4: Single Tool Call Message ===\n")
+    print("\n=== Example 3: Single Tool Call Message ===\n")
 
-    # Create an AI message with a tool call
-    message = create_tool_call_message("get_weather", city="London", units="metric")
+    # Create a tool call
+    tool_call = create_tool_call("get_weather", city="London", units="metric")
+
+    # Create an AI message with the tool call
+    message = AIMessage(content="", tool_calls=[tool_call])
 
     print(f"Message type: {type(message).__name__}")
     print(f"Content: {message.content}")
-    print(f"Tool calls: {message.additional_kwargs.get('tool_calls', [])}")
+    print(f"Tool calls: {len(message.tool_calls)}")
 
     # Create with content
-    message_with_content = create_tool_call_message(
-        "get_weather",
+    message_with_content = AIMessage(
         content="Let me check the weather for you",
-        city="London",
+        tool_calls=[create_tool_call("get_weather", city="London")]
     )
 
     print(f"\nMessage with content: {message_with_content.content}")
@@ -107,26 +83,31 @@ def example_single_tool_call_message():
 
 def example_multiple_tool_calls_message():
     """Example: Creating a message with multiple tool calls."""
-    print("\n=== Example 5: Multiple Tool Calls Message ===\n")
+    print("\n=== Example 4: Multiple Tool Calls Message ===\n")
+
+    # Create multiple tool calls
+    tool_calls = [
+        create_tool_call("get_weather", city="London"),
+        create_tool_call("get_weather", city="Paris"),
+        create_tool_call("get_time", timezone="UTC"),
+    ]
 
     # Create a message with multiple tool calls
-    message = create_multi_tool_call_message(
-        ("get_weather", {"city": "London"}),
-        ("get_weather", {"city": "Paris"}),
-        ("get_time", {"timezone": "UTC"}),
+    message = AIMessage(
         content="Checking multiple locations",
+        tool_calls=tool_calls
     )
 
     print(f"Message content: {message.content}")
-    print(f"Number of tool calls: {len(message.additional_kwargs['tool_calls'])}")
+    print(f"Number of tool calls: {len(message.tool_calls)}")
 
-    for i, tc in enumerate(message.additional_kwargs["tool_calls"], 1):
-        print(f"  {i}. {tc['function']['name']}: {tc['function']['arguments']}")
+    for i, tc in enumerate(message.tool_calls, 1):
+        print(f"  {i}. {tc.name}: {tc.args}")
 
 
 def example_encoded_in_prompt():
     """Example: Encoding tool calls in prompts for Parrot Model."""
-    print("\n=== Example 6: Encoded Tool Calls in Prompts ===\n")
+    print("\n=== Example 5: Encoded Tool Calls in Prompts ===\n")
 
     # Create encoded tool call strings
     london_weather = encode_tool_call_in_prompt("get_weather", city="London")
@@ -142,7 +123,7 @@ def example_encoded_in_prompt():
 
 def example_with_chat_model():
     """Example: Using tool calls with ParrotChatModel."""
-    print("\n=== Example 7: With ParrotChatModel ===\n")
+    print("\n=== Example 6: With ParrotChatModel ===\n")
 
     # Create the chat model
     model = ParrotChatModel()
@@ -164,16 +145,15 @@ def example_with_chat_model():
 
 def example_in_message_list():
     """Example: Using tool calls in a conversation."""
-    print("\n=== Example 8: In a Conversation ===\n")
+    print("\n=== Example 7: In a Conversation ===\n")
 
     # Create a conversation with tool calls
+    tool_call = create_tool_call("get_weather", city="London", units="metric")
     messages = [
         HumanMessage(content="What's the weather in London?"),
-        create_tool_call_message(
-            "get_weather",
+        AIMessage(
             content="Let me check that for you",
-            city="London",
-            units="metric",
+            tool_calls=[tool_call]
         ),
     ]
 
@@ -182,15 +162,13 @@ def example_in_message_list():
         print(f"\n  Message {i}:")
         print(f"    Type: {type(msg).__name__}")
         print(f"    Content: {msg.content}")
-        if hasattr(msg, "additional_kwargs") and msg.additional_kwargs.get(
-            "tool_calls"
-        ):
-            print(f"    Has tool calls: Yes")
+        if hasattr(msg, "tool_calls") and msg.tool_calls:
+            print(f"    Tool calls: {len(msg.tool_calls)}")
 
 
 def example_with_langchain_chain():
     """Example: Using in a LangChain chain."""
-    print("\n=== Example 9: With LangChain Chain (LCEL) ===\n")
+    print("\n=== Example 8: With LangChain Chain (LCEL) ===\n")
 
     try:
         from langchain_core.prompts import ChatPromptTemplate
@@ -224,7 +202,6 @@ if __name__ == "__main__":
 
     example_create_tool_call()
     example_create_multiple_tool_calls()
-    example_tool_call_dict()
     example_single_tool_call_message()
     example_multiple_tool_calls_message()
     example_encoded_in_prompt()

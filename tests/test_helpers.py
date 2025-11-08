@@ -113,16 +113,18 @@ class TestPydanticAIHelpers:
         tool_call = create_tool_call("test_tool", tool_call_id=custom_id, param="value")
         assert tool_call.tool_call_id == custom_id
 
-    def test_create_tool_calls_multiple(self):
-        """Test creating multiple tool calls at once."""
+    def test_create_multiple_tool_calls_with_list_comprehension(self):
+        """Test creating multiple tool calls with list comprehension."""
         pytest.importorskip("pydantic_ai", reason="Pydantic AI not installed")
 
-        from parrot_model.adapters.pydantic_ai_helpers import create_tool_calls
+        from parrot_model.adapters.pydantic_ai_helpers import create_tool_call
 
-        tool_calls = create_tool_calls(
+        # Users can create multiple tool calls with list comprehension
+        calls = [
             ("get_weather", {"city": "London"}),
             ("get_time", {"timezone": "UTC"}),
-        )
+        ]
+        tool_calls = [create_tool_call(name, **params) for name, params in calls]
 
         assert len(tool_calls) == 2
         assert tool_calls[0].tool_name == "get_weather"
@@ -146,82 +148,56 @@ class TestLangChainHelpers:
         result = encode_tool_call_in_prompt("simple_tool")
         assert result == "[TOOL:simple_tool|]"
 
-    def test_create_tool_call_dict(self):
-        """Test creating a tool call dictionary."""
-        from parrot_model.adapters.langchain_helpers import create_tool_call_dict
-
-        tool_dict = create_tool_call_dict("get_weather", city="London", units="metric")
-
-        # Verify structure
-        assert "id" in tool_dict
-        assert "type" in tool_dict
-        assert "function" in tool_dict
-        assert tool_dict["type"] == "function"
-        assert tool_dict["function"]["name"] == "get_weather"
-
-        # Verify arguments are JSON-encoded
-        args = json.loads(tool_dict["function"]["arguments"])
-        assert args == {"city": "London", "units": "metric"}
-
-    def test_create_tool_call_dict_with_custom_id(self):
-        """Test creating a tool call dict with custom ID."""
-        from parrot_model.adapters.langchain_helpers import create_tool_call_dict
-
-        custom_id = "my-tool-call-123"
-        tool_dict = create_tool_call_dict("test_tool", tool_call_id=custom_id)
-        assert tool_dict["id"] == custom_id
-
-    def test_create_tool_call_message_requires_langchain(self):
-        """Test that create_tool_call_message checks for langchain."""
+    def test_create_tool_call_requires_langchain(self):
+        """Test that create_tool_call checks for langchain."""
         pytest.importorskip("langchain_core", reason="LangChain not installed")
 
-        from parrot_model.adapters.langchain_helpers import create_tool_call_message
+        from parrot_model.adapters.langchain_helpers import create_tool_call
 
         # Should work if langchain is installed
-        message = create_tool_call_message("get_weather", city="London")
+        tool_call = create_tool_call("get_weather", city="London")
 
-        # Verify it's an AIMessage
-        assert hasattr(message, "content")
-        assert hasattr(message, "additional_kwargs")
-        assert "tool_calls" in message.additional_kwargs
-        assert len(message.additional_kwargs["tool_calls"]) == 1
+        assert tool_call.name == "get_weather"
+        assert tool_call.args == {"city": "London"}
+        assert isinstance(tool_call.id, str)
 
-    def test_create_tool_call_message_with_content(self):
-        """Test creating a tool call message with content."""
+    def test_create_tool_call_with_custom_id(self):
+        """Test creating a tool call with custom ID."""
         pytest.importorskip("langchain_core", reason="LangChain not installed")
 
-        from parrot_model.adapters.langchain_helpers import create_tool_call_message
+        from parrot_model.adapters.langchain_helpers import create_tool_call
 
-        content = "Let me check that for you"
-        message = create_tool_call_message(
-            "get_weather", content=content, city="London"
-        )
+        custom_id = "my-tool-call-123"
+        tool_call = create_tool_call("test_tool", tool_call_id=custom_id, param="value")
+        assert tool_call.id == custom_id
+        assert tool_call.name == "test_tool"
+        assert tool_call.args == {"param": "value"}
 
-        assert message.content == content
-        tool_call = message.additional_kwargs["tool_calls"][0]
-        assert tool_call["function"]["name"] == "get_weather"
-
-    def test_create_multi_tool_call_message(self):
-        """Test creating a message with multiple tool calls."""
+    def test_create_multiple_tool_calls_and_message(self):
+        """Test creating multiple tool calls and using them in an AIMessage."""
         pytest.importorskip("langchain_core", reason="LangChain not installed")
 
-        from parrot_model.adapters.langchain_helpers import (
-            create_multi_tool_call_message,
-        )
+        from parrot_model.adapters.langchain_helpers import create_tool_call
+        from langchain_core.messages import AIMessage
 
-        message = create_multi_tool_call_message(
-            ("get_weather", {"city": "London"}),
-            ("get_time", {"timezone": "UTC"}),
-            ("calculate", {"x": 5, "y": 3}),
+        # Create multiple tool calls with list comprehension
+        tool_calls = [
+            create_tool_call("get_weather", city="London"),
+            create_tool_call("get_time", timezone="UTC"),
+            create_tool_call("calculate", x=5, y=3)
+        ]
+
+        # Use them in an AIMessage
+        message = AIMessage(
             content="Processing multiple operations",
+            tool_calls=tool_calls
         )
 
         assert message.content == "Processing multiple operations"
-        tool_calls = message.additional_kwargs["tool_calls"]
-        assert len(tool_calls) == 3
-        assert tool_calls[0]["function"]["name"] == "get_weather"
-        assert tool_calls[1]["function"]["name"] == "get_time"
-        assert tool_calls[2]["function"]["name"] == "calculate"
+        assert len(message.tool_calls) == 3
+        assert message.tool_calls[0].name == "get_weather"
+        assert message.tool_calls[1].name == "get_time"
+        assert message.tool_calls[2].name == "calculate"
 
 
 class TestHelperConsistency:
