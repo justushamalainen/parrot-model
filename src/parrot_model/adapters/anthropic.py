@@ -34,11 +34,10 @@ Example:
 
 from __future__ import annotations
 
-import json
 import time
 import uuid
 from collections.abc import AsyncIterator, Iterator
-from typing import Any, Literal
+from typing import Any
 
 from parrot_model.core.base import ParrotModel
 from parrot_model.core.config import ParrotConfig
@@ -194,7 +193,7 @@ class Messages:
         """Convert Anthropic message format to a string for ParrotModel."""
         parts = []
         for msg in messages:
-            role = msg.get("role", "user")
+            msg.get("role", "user")
             content = msg.get("content", "")
 
             # Handle both string and list content
@@ -376,7 +375,7 @@ class AsyncMessages:
         """Convert Anthropic message format to a string for ParrotModel."""
         parts = []
         for msg in messages:
-            role = msg.get("role", "user")
+            msg.get("role", "user")
             content = msg.get("content", "")
 
             # Handle both string and list content

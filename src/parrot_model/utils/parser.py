@@ -6,7 +6,6 @@ including extracting tool call encodings and other special syntax
 from user messages.
 """
 
-import re
 
 
 def parse_tool_parameters(param_string: str) -> dict[str, str]:

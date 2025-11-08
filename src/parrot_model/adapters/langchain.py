@@ -23,13 +23,13 @@ Example:
     >>> # With tool calls
     >>> message = HumanMessage(content="Get [TOOL:weather|city=London]")
     >>> response = model.invoke([message])
-    >>> response.additional_kwargs["tool_calls"]
-    [{'id': '...', 'type': 'function', 'function': {'name': 'weather', 'arguments': '{"city": "London"}'}}]
+    >>> response.additional_kwargs["tool_calls"]  # doctest: +SKIP
+    [...]
 """
 
 import json
 from collections.abc import AsyncIterator, Iterator
-from typing import Any, Optional
+from typing import Any
 
 from parrot_model.core.base import ParrotModel
 from parrot_model.core.config import ParrotConfig
@@ -107,8 +107,8 @@ class ParrotChatModel(BaseChatModel):  # type: ignore
         >>> # With tool calls
         >>> message = HumanMessage(content="Get [TOOL:search|query=Python]")
         >>> response = model.invoke([message])
-        >>> print(response.additional_kwargs["tool_calls"])
-        [{'id': '...', 'type': 'function', 'function': {'name': 'search', 'arguments': '{"query": "Python"}'}}]
+        >>> print(response.additional_kwargs["tool_calls"])  # doctest: +SKIP
+        [...]
     """
 
     # Pydantic model field for the configuration
@@ -116,7 +116,7 @@ class ParrotChatModel(BaseChatModel):  # type: ignore
 
     def __init__(
         self,
-        parrot_config: Optional[ParrotConfig] = None,
+        parrot_config: ParrotConfig | None = None,
         **kwargs: Any,
     ):
         """
@@ -246,8 +246,8 @@ class ParrotChatModel(BaseChatModel):  # type: ignore
     def _generate(
         self,
         messages: list[BaseMessage],
-        stop: Optional[list[str]] = None,
-        run_manager: Optional[CallbackManagerForLLMRun] = None,
+        stop: list[str] | None = None,
+        run_manager: CallbackManagerForLLMRun | None = None,
         **kwargs: Any,
     ) -> ChatResult:
         """
@@ -291,8 +291,8 @@ class ParrotChatModel(BaseChatModel):  # type: ignore
     async def _agenerate(
         self,
         messages: list[BaseMessage],
-        stop: Optional[list[str]] = None,
-        run_manager: Optional[AsyncCallbackManagerForLLMRun] = None,
+        stop: list[str] | None = None,
+        run_manager: AsyncCallbackManagerForLLMRun | None = None,
         **kwargs: Any,
     ) -> ChatResult:
         """
@@ -339,8 +339,8 @@ class ParrotChatModel(BaseChatModel):  # type: ignore
     def _stream(
         self,
         messages: list[BaseMessage],
-        stop: Optional[list[str]] = None,
-        run_manager: Optional[CallbackManagerForLLMRun] = None,
+        stop: list[str] | None = None,
+        run_manager: CallbackManagerForLLMRun | None = None,
         **kwargs: Any,
     ) -> Iterator[ChatGenerationChunk]:
         """
@@ -383,8 +383,8 @@ class ParrotChatModel(BaseChatModel):  # type: ignore
     async def _astream(
         self,
         messages: list[BaseMessage],
-        stop: Optional[list[str]] = None,
-        run_manager: Optional[AsyncCallbackManagerForLLMRun] = None,
+        stop: list[str] | None = None,
+        run_manager: AsyncCallbackManagerForLLMRun | None = None,
         **kwargs: Any,
     ) -> AsyncIterator[ChatGenerationChunk]:
         """

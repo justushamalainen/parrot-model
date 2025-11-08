@@ -13,14 +13,14 @@ from parrot_model.core.config import ParrotConfig
 
 # Check for optional dependencies
 try:
-    import pydantic_ai
+    import pydantic_ai  # noqa: F401
 
     PYDANTIC_AI_AVAILABLE = True
 except ImportError:
     PYDANTIC_AI_AVAILABLE = False
 
 try:
-    from langchain_core.messages import HumanMessage
+    from langchain_core.messages import HumanMessage  # noqa: F401
 
     LANGCHAIN_AVAILABLE = True
 except ImportError:
@@ -89,8 +89,8 @@ def sample_messages():
     """
     return {
         "simple": "Hello, world!",
-        "long": "This is a very long message that will be used to test truncation functionality in both token-based and character-based modes.",
+        "long": "This is a very long message that will be used to test truncation functionality in both token-based and character-based modes.",  # noqa: E501
         "with_tool_call": "Get weather: [TOOL:get_weather|city=London|units=metric]",
-        "multiple_tool_calls": "Compare [TOOL:get_weather|city=London] and [TOOL:get_weather|city=Paris]",
-        "mixed_content": "First check [TOOL:search|query=Python] then send [TOOL:email|to=user@example.com]",
+        "multiple_tool_calls": "Compare [TOOL:get_weather|city=London] and [TOOL:get_weather|city=Paris]",  # noqa: E501
+        "mixed_content": "First check [TOOL:search|query=Python] then send [TOOL:email|to=user@example.com]",  # noqa: E501
     }

@@ -5,8 +5,6 @@ These tests verify that the helper functions correctly create tool calls
 and handle dependencies appropriately.
 """
 
-import json
-import uuid
 
 import pytest
 
@@ -54,11 +52,11 @@ class TestSharedUtilities:
 
     def test_both_helpers_use_same_shared_function(self):
         """Test that both helper modules use the same shared encoding function."""
-        from parrot_model.adapters.pydantic_ai_helpers import (
-            encode_tool_call_in_prompt as pa_encode,
-        )
         from parrot_model.adapters.langchain_helpers import (
             encode_tool_call_in_prompt as lc_encode,
+        )
+        from parrot_model.adapters.pydantic_ai_helpers import (
+            encode_tool_call_in_prompt as pa_encode,
         )
 
         # Both should produce the same result
@@ -177,8 +175,9 @@ class TestLangChainHelpers:
         """Test creating multiple tool calls and using them in an AIMessage."""
         pytest.importorskip("langchain_core", reason="LangChain not installed")
 
-        from parrot_model.adapters.langchain_helpers import create_tool_call
         from langchain_core.messages import AIMessage
+
+        from parrot_model.adapters.langchain_helpers import create_tool_call
 
         # Create multiple tool calls with list comprehension
         tool_calls = [

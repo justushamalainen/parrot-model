@@ -14,7 +14,7 @@ from parrot_model.core.config import ParrotConfig
 
 # Check for optional dependencies at module level
 try:
-    import pydantic_ai
+    import pydantic_ai  # noqa: F401
     from pydantic_ai.messages import ModelRequest, UserPromptPart
 
     PYDANTIC_AI_AVAILABLE = True

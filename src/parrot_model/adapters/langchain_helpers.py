@@ -16,7 +16,6 @@ Example:
 
 from __future__ import annotations
 
-import json
 from typing import Any
 
 from parrot_model.adapters._tool_call_utils import (
@@ -51,7 +50,7 @@ def create_tool_call(
     tool_name: str,
     tool_call_id: str | None = None,
     **parameters: Any
-) -> "ToolCall":
+) -> ToolCall:
     """
     Create a LangChain ToolCall object.
 
