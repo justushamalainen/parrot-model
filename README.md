@@ -131,6 +131,69 @@ response = model.generate(message)
 "Check weather in [TOOL:get_weather|city=London] and [TOOL:get_weather|city=Paris]"
 ```
 
+### Tool Call Helpers
+
+Parrot Model provides helper functions to easily create tool calls for both Pydantic AI and LangChain/LangGraph. These helpers use the native classes from each framework for maximum compatibility.
+
+#### Pydantic AI Helpers
+
+```python
+from parrot_model.adapters.pydantic_ai_helpers import (
+    create_tool_call,
+    encode_tool_call_in_prompt
+)
+from pydantic_ai.messages import ModelRequest
+
+# Create a single ToolCallPart (Pydantic AI's native class)
+tool_call = create_tool_call("get_weather", city="London", units="metric")
+
+# Create multiple tool calls with list comprehension
+calls = [
+    ("get_weather", {"city": "London"}),
+    ("get_time", {"timezone": "UTC"})
+]
+tool_calls = [create_tool_call(name, **params) for name, params in calls]
+
+# Use tool calls in a ModelRequest
+request = ModelRequest(parts=tool_calls)
+
+# Encode a tool call for use in prompts
+encoding = encode_tool_call_in_prompt("get_weather", city="London")
+# Returns: "[TOOL:get_weather|city=London]"
+```
+
+#### LangChain/LangGraph Helpers
+
+```python
+from parrot_model.adapters.langchain_helpers import (
+    create_tool_call,
+    encode_tool_call_in_prompt
+)
+from langchain_core.messages import AIMessage
+
+# Create a ToolCall object (LangChain's native class)
+tool_call = create_tool_call("get_weather", city="London")
+
+# Use in an AIMessage
+message = AIMessage(content="Checking weather", tool_calls=[tool_call])
+
+# Create multiple tool calls with list comprehension
+tool_calls = [
+    create_tool_call("get_weather", city="London"),
+    create_tool_call("get_time", timezone="UTC")
+]
+
+# Use in an AIMessage with multiple tool calls
+message = AIMessage(
+    content="Checking multiple locations",
+    tool_calls=tool_calls
+)
+
+# Encode a tool call for use in prompts
+encoding = encode_tool_call_in_prompt("get_weather", city="London")
+# Returns: "[TOOL:get_weather|city=London]"
+```
+
 ## Configuration
 
 ```python
@@ -263,7 +326,9 @@ Check out the [examples/](./examples/) directory for more:
 
 - `basic_usage.py` - Core functionality
 - `pydantic_ai_example.py` - Pydantic AI integration
+- `pydantic_ai_tool_helpers.py` - Pydantic AI tool call helpers
 - `langchain_example.py` - LangChain integration
+- `langchain_tool_helpers.py` - LangChain/LangGraph tool call helpers
 - `tool_calls_example.py` - Tool calling examples
 
 ## Development
