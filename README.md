@@ -17,12 +17,13 @@ Parrot Model is a mock LLM provider that lets you develop and test LLM-powered a
 ## Features
 
 - ✅ **Zero Dependencies**: Works completely offline, no API keys needed
+- ✅ **SDK Compatible**: Drop-in replacement for OpenAI and Anthropic Python SDKs
 - ✅ **Framework Support**: Works with Pydantic AI and LangChain/LangGraph
 - ✅ **Tool Calls**: Full support for function/tool calling
 - ✅ **Streaming**: Supports both sync and async streaming
 - ✅ **Deterministic**: Same input = same output, every time
 - ✅ **Configurable**: Control response length, templates, and behavior
-- ✅ **Easy to Use**: Drop-in replacement for real LLM providers
+- ✅ **Easy to Use**: Familiar interfaces, minimal learning curve
 
 ## Quick Start
 
@@ -53,6 +54,61 @@ from parrot_model import ParrotModel
 model = ParrotModel()
 response = model.generate("Hello, world!")
 print(response)  # Output: "Hello, world!"
+```
+
+### As OpenAI SDK Replacement
+
+```python
+from parrot_model.adapters import OpenAI
+
+# Use exactly like the OpenAI SDK - no API key needed!
+client = OpenAI()
+response = client.chat.completions.create(
+    model="gpt-4",
+    messages=[
+        {"role": "system", "content": "You are a helpful assistant."},
+        {"role": "user", "content": "Hello!"}
+    ]
+)
+print(response.choices[0].message.content)  # Output: "Hello!"
+
+# Streaming works too
+stream = client.chat.completions.create(
+    model="gpt-4",
+    messages=[{"role": "user", "content": "Count to 5"}],
+    stream=True
+)
+for chunk in stream:
+    if chunk.choices[0].delta.content:
+        print(chunk.choices[0].delta.content, end="")
+```
+
+### As Anthropic SDK Replacement
+
+```python
+from parrot_model.adapters import Anthropic
+
+# Use exactly like the Anthropic SDK - no API key needed!
+client = Anthropic()
+message = client.messages.create(
+    model="claude-3-5-sonnet-20241022",
+    max_tokens=1024,
+    messages=[
+        {"role": "user", "content": "Hello, Claude!"}
+    ]
+)
+print(message.content[0].text)  # Output: "Hello, Claude!"
+
+# Streaming works too
+stream = client.messages.create(
+    model="claude-3-5-sonnet-20241022",
+    max_tokens=1024,
+    messages=[{"role": "user", "content": "Tell me a story"}],
+    stream=True
+)
+for event in stream:
+    if hasattr(event, 'delta') and hasattr(event.delta, 'text'):
+        print(event.delta.text, end="")
 ```
 
 ### With Pydantic AI
@@ -325,11 +381,16 @@ response = chain.invoke({"name": "World"})
 Check out the [examples/](./examples/) directory for more:
 
 - `basic_usage.py` - Core functionality
+- `openai_sdk_example.py` - OpenAI SDK compatibility
+- `anthropic_sdk_example.py` - Anthropic SDK compatibility
+- `pydantic_ai_integration.py` - Pydantic AI integration
+- `langchain_integration.py` - LangChain integration
 - `pydantic_ai_example.py` - Pydantic AI integration
 - `pydantic_ai_tool_helpers.py` - Pydantic AI tool call helpers
 - `langchain_example.py` - LangChain integration
 - `langchain_tool_helpers.py` - LangChain/LangGraph tool call helpers
 - `tool_calls_example.py` - Tool calling examples
+- `streaming_example.py` - Streaming responses
 
 ## Development
 
@@ -374,6 +435,8 @@ Because like a parrot, it repeats what you say - but unlike a real parrot, it do
 - [x] Tool call support
 - [x] Pydantic AI integration
 - [x] LangChain integration
+- [x] OpenAI SDK compatibility
+- [x] Anthropic SDK compatibility
 - [ ] Response templates
 - [ ] Custom response scripts
 - [ ] Latency simulation

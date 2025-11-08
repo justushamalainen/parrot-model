@@ -44,7 +44,10 @@ class ResponseGenerator:
         if config.enable_tool_calls:
             # Import here to avoid circular dependency
             from parrot_model.core.tools import ToolCallParser
-            self.tool_parser = ToolCallParser(config.tool_call_pattern)
+            self.tool_parser = ToolCallParser(
+                config.tool_call_pattern,
+                deterministic=config.deterministic
+            )
 
     def parse_tool_calls(self, message: str) -> tuple[str, list]:
         """
